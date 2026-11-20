@@ -1,4 +1,8 @@
-export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.10:3000';
+import { Platform } from 'react-native';
+
+// En la web publicada (servida por el mismo servidor) se usa la misma URL: ''
+export const API_URL =
+  process.env.EXPO_PUBLIC_API_URL ?? (Platform.OS === 'web' ? '' : 'http://192.168.1.10:3000');
 
 async function request(path, { method = 'GET', body } = {}) {
   const res = await fetch(API_URL + path, {

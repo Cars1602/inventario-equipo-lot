@@ -1,9 +1,26 @@
 import 'dotenv/config';
 import express from 'express';
+import path from 'node:path';
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { pool } from './db.js';
 
 const app = express();
 app.use(express.json({ limit: '8mb' }));
+
+// CORS: permite usar la API desde Expo web en desarrollo (localhost:8081)
+app.use('/api', (req, res, next) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  next();
+});
+
+// Versión web de la app (generada con `npm run build:web` en mobile/)
+const WEB_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'mobile', 'dist');
+const hayWeb = existsSync(path.join(WEB_DIR, 'index.html'));
+if (hayWeb) app.use(express.static(WEB_DIR));
 
 const COLS = 'id, nombre, categoria, cantidad, proyecto, (imagen IS NOT NULL) AS tiene_imagen';
 
@@ -34,6 +51,10 @@ function validar(b, parcial = false) {
   }
   return c;
 }
+
+// Comprobación rápida de que la API está viva
+app.get('/api/salud', (_req, res) => res.json({ ok: true, web: hayWeb }));
+if (!hayWeb) app.get('/', (_req, res) => res.json({ ok: true, servicio: 'inventario-api', web: false }));
 
 // Listado (sin imagen para que sea ligero)
 app.get('/api/componentes', wrap(async (req, res) => {

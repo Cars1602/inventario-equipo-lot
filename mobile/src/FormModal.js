@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, Pressable,
+  ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, Pressable,
   ScrollView, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { api } from './api';
+import { avisar, confirmar } from './alerta';
 import { CATEGORIAS, colors } from './theme';
 
 const VACIO = { nombre: '', categoria: 'Otro', cantidad: 0, proyecto: '', imagen: null };
@@ -21,7 +22,7 @@ export default function FormModal({ id, onClose, onSaved }) {
     if (id) {
       api.obtener(id)
         .then((c) => setForm({ ...c, proyecto: c.proyecto ?? '' }))
-        .catch((e) => { Alert.alert('Error', e.message); onClose(); })
+        .catch((e) => { avisar('Error', e.message); onClose(); })
         .finally(() => setCargando(false));
     }
   }, [id]);
@@ -30,16 +31,17 @@ export default function FormModal({ id, onClose, onSaved }) {
     const perm = camara
       ? await ImagePicker.requestCameraPermissionsAsync()
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return Alert.alert('Permiso denegado');
+    if (!perm.granted) return avisar('Permiso denegado');
     const opts = { mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.4, base64: true };
     const r = camara ? await ImagePicker.launchCameraAsync(opts) : await ImagePicker.launchImageLibraryAsync(opts);
     if (r.canceled) return;
     const a = r.assets[0];
-    set('imagen')(`data:${a.mimeType || 'image/jpeg'};base64,${a.base64}`);
+    // En la web la uri ya viene como data URL
+    set('imagen')(a.base64 ? `data:${a.mimeType || 'image/jpeg'};base64,${a.base64}` : a.uri);
   };
 
   const guardar = async () => {
-    if (!form.nombre.trim()) return Alert.alert('Falta el nombre del material');
+    if (!form.nombre.trim()) return avisar('Falta el nombre del material');
     setGuardando(true);
     try {
       const body = {
@@ -53,21 +55,15 @@ export default function FormModal({ id, onClose, onSaved }) {
       else await api.crear(body);
       onSaved();
     } catch (e) {
-      Alert.alert('Error', e.message);
+      avisar('Error', e.message);
     } finally {
       setGuardando(false);
     }
   };
 
-  const eliminar = () => Alert.alert('Eliminar', `¿Eliminar "${form.nombre}"?`, [
-    { text: 'Cancelar', style: 'cancel' },
-    {
-      text: 'Eliminar', style: 'destructive',
-      onPress: async () => {
-        try { await api.eliminar(id); onSaved(); } catch (e) { Alert.alert('Error', e.message); }
-      },
-    },
-  ]);
+  const eliminar = () => confirmar('Eliminar', `¿Eliminar "${form.nombre}"?`, 'Eliminar', async () => {
+    try { await api.eliminar(id); onSaved(); } catch (e) { avisar('Error', e.message); }
+  });
 
   const cantidad = Number(form.cantidad) || 0;
 

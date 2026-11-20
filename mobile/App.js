@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, FlatList, Image, Platform, Pressable, StatusBar as RNStatusBar,
+  ActivityIndicator, FlatList, Image, Platform, Pressable, StatusBar as RNStatusBar,
   StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { api } from './src/api';
+import { avisar } from './src/alerta';
 import FormModal from './src/FormModal';
 import { colors } from './src/theme';
 
@@ -19,7 +20,7 @@ export default function App() {
     try {
       setItems(await api.listar(busqueda.trim()));
     } catch (e) {
-      Alert.alert('Sin conexión', `No se pudo conectar con el servidor.\n${e.message}`);
+      avisar('Sin conexión', `No se pudo conectar con el servidor.\n${e.message}`);
     } finally {
       setCargando(false);
     }
@@ -35,7 +36,7 @@ export default function App() {
       const upd = await api.ajustar(id, delta);
       setItems((prev) => prev.map((x) => (x.id === id ? upd : x)));
     } catch (e) {
-      Alert.alert('Error', e.message);
+      avisar('Error', e.message);
     }
   };
 
