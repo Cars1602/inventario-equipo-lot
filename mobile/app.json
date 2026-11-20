@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "Inventario",
+    "slug": "inventario-equipo-lot",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "android": {
+      "usesCleartextTraffic": true
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permite elegir fotos de los componentes.",
+          "cameraPermission": "Permite tomar fotos de los componentes."
+        }
+      ]
+    ]
+  }
+}
